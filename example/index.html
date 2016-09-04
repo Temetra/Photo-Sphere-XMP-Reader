@@ -21,10 +21,10 @@
 	<form id="parameters">
 		<div class="param"><label for="ImageWidth">Image width</label><input type="text" id="ImageWidth"></div>
 		<div class="param"><label for="ImageHeight">Image height</label><input type="text" id="ImageHeight"></div>
-		<div class="param"><label for="CroppedAreaImageWidthPixels">Cropped area width</label><input type="text" id="CroppedAreaImageWidthPixels"></div>
-		<div class="param"><label for="CroppedAreaImageHeightPixels">Cropped area height</label><input type="text" id="CroppedAreaImageHeightPixels"></div>
-		<div class="param"><label for="FullPanoWidthPixels">Full sphere width</label><input type="text" id="FullPanoWidthPixels"></div>
-		<div class="param"><label for="FullPanoHeightPixels">Full sphere height</label><input type="text" id="FullPanoHeightPixels"></div>
+		<div class="param"><label for="CroppedAreaImageWidthPixels">Cropped area width</label><input type="text" id="CroppedAreaImageWidthPixels" data-gpano="CroppedAreaImageWidthPixels"></div>
+		<div class="param"><label for="CroppedAreaImageHeightPixels">Cropped area height</label><input type="text" id="CroppedAreaImageHeightPixels" data-gpano="CroppedAreaImageHeightPixels"></div>
+		<div class="param"><label for="FullPanoWidthPixels">Full sphere width</label><input type="text" id="FullPanoWidthPixels" data-gpano="FullPanoWidthPixels"></div>
+		<div class="param"><label for="FullPanoHeightPixels">Full sphere height</label><input type="text" id="FullPanoHeightPixels" data-gpano="FullPanoHeightPixels"></div>
 		<div class="param"><label for="HorizDeg">Horizontal field of view</label><input type="text" id="HorizDeg"></div>
 		<div class="param"><label for="VertDeg">Vertical field of view</label><input type="text" id="VertDeg"></div>
 	</form>
@@ -41,8 +41,8 @@
 			var inputs = document.getElementsByTagName("input");
 			for(var i = 0; i < inputs.length; i++)
 			{
-				if (inputs[i].type == "text") 
-					inputs[i].value = xmp.getGPanoValue(inputs[i].id);
+				var gpanoAttrib = inputs[i].getAttribute("data-gpano");
+				if (gpanoAttrib) inputs[i].value = xmp.getGPanoValue(gpanoAttrib);
 			}
 
 			// Calc degrees

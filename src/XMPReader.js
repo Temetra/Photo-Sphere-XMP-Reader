@@ -1,11 +1,23 @@
 var _xmpreader;
 
 (function (_xmpreader) {
+	var xmpIdentifier = "http://ns.adobe.com/xap/1.0/";
+
+	var ProcessState = {
+		Stop: "Stop",
+		ReadMarker: "ReadMarker",
+		ReadLengthToNextMarker: "ReadLengthToNextMarker",
+		ReadLengthOfData: "ReadLengthOfData",
+		ReadData: "ReadData"
+	};
+
 	var XmpReader = (function () {
 		// Constructor method
 		function XmpReader() {
-			// Init object
-			this.result = "";
+			// Initialize public attributes
+			this.XMPData = "";
+
+			// Set up events
 			_domlessevent.initializeEvents(this);
 			_domlessevent.addEvent("xmploaded", this);
 			_domlessevent.addEvent("xmperror", this);
@@ -14,66 +26,144 @@ var _xmpreader;
 		// Returns string value of GPano XMP attribute
 		XmpReader.prototype.getGPanoValue = function(attribName) {
 			var fullname = "GPano:" + attribName + "=\"";
-			var start = this.result.indexOf(fullname);
-			var end = this.result.indexOf("\"", start + fullname.length);
+			var start = this.XMPData.indexOf(fullname);
+			var end = this.XMPData.indexOf("\"", start + fullname.length);
 			if (start < 0 || end < 0) return "";
-			return this.result.substring(start + fullname.length, end);
+			return this.XMPData.substring(start + fullname.length, end);
 		};
 
 		// Extracts XMP data from file blob
 		XmpReader.prototype.readFile = function(file) {
-			// Init parameters for read process
+			// Reinitialize public attributes
+			this.XMPData = ""; 
+
+			// Initialize private parameters
 			var params = {
 				fileblob: file,
 				filereader: new FileReader(),
 				currentPos: 0,
-				chunkSize: 2048,
-				data: "",
-				start: -1,
-				end: -1,
+				sliceLength: 2,
+				state: ProcessState.ReadMarker,
 				xmpreader: this
 			};
 			
-			// Read XMP
+			// Start reading data
 			params.filereader.onload = function(event) { filereaderOnload(event, params) };
-			readSlice(params);
+			getSlice(params);
 		};
 
+		// Gets a slice from the file blob and reads slice as array buffer
+		function getSlice(params) {
+			var slice = params.fileblob.slice(params.currentPos, params.currentPos + params.sliceLength);
+			params.filereader.readAsArrayBuffer(slice);
+		}
+
+		// Processes result of reading slice as array buffer
 		function filereaderOnload(event, params) {
-			// Load result into array
-			var view = new Uint8Array(event.target.result);
+			var data = new Uint8Array(event.target.result);
 
-			// Convert array into string and append to current data
-			params.data += String.fromCharCode.apply(null, view);
-			
-			// Look for XMP segment
-			if (params.start < 0) params.start = params.data.indexOf("<x:xmpmeta");
-			if (params.end < 0) params.end = params.data.indexOf("</x:xmpmeta>");
-
-			// Read more?
-			if (params.end < 0) {
-				// Quit at 512k read
-				if (params.currentPos + params.chunkSize >= 512 * 1024) {
-					// Assume blob does not contain XMP
-					params.xmpreader.result = "";
-					_domlessevent.dispatchEvent(params.xmpreader, "xmperror");
-				}
-				else {
-					// Read more data
-					readSlice(params);
-				}
-			}
-			else {
-				// Trim data and finish
-				params.xmpreader.result = params.data.substring(params.start, params.end + "</x:xmpmeta>".length);
-				_domlessevent.dispatchEvent(params.xmpreader, "xmploaded");
+			switch (params.state) {
+				case ProcessState.ReadMarker:
+					// Process marker
+					processMarker(data, params);
+					getSlice(params);
+					break;
+				case ProcessState.ReadLengthToNextMarker:
+					// Move position to length found in marker payload
+					// Set slice size to length of marker
+					params.currentPos += (data[0] * 0x100 + data[1]) - 2;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadMarker;
+					getSlice(params);
+					break;
+				case ProcessState.ReadLengthOfData:
+					// Move position past payload
+					// Set slice size to length found in marker payload
+					params.currentPos += 2;
+					params.sliceLength = (data[0] * 0x100 + data[1]) - 2;
+					params.state = ProcessState.ReadData;
+					getSlice(params);
+					break;
+				case ProcessState.ReadData:
+					// Read data found in marker
+					readMarkerData(data, params);
+					// Process next marker
+					params.currentPos += params.sliceLength;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadMarker;
+					getSlice(params);
+					break;
+				default:
+					// Stop processing
+					if (params.xmpreader.XMPData) _domlessevent.dispatchEvent(params.xmpreader, "xmploaded");
+					else _domlessevent.dispatchEvent(params.xmpreader, "xmperror");
+					break;
 			}
 		}
 
-		function readSlice(params) {
-			var slice = params.fileblob.slice(params.currentPos, params.currentPos + params.chunkSize);
-			params.currentPos += params.chunkSize;
-			params.filereader.readAsArrayBuffer(slice);
+		// Processes JPEG marker data and configures state for next read
+		function processMarker(data, params) {
+			if (data[0] != 0xff) {
+				params.state = ProcessState.Stop;
+				return;
+			}
+
+			switch (data[1]) {
+				// Read next two bytes as marker
+				case 0xD8: // SOI
+				case 0xD9: // EOI
+				case 0xD0: // RSTn
+				case 0xD1: // RSTn
+				case 0xD2: // RSTn
+				case 0xD3: // RSTn
+				case 0xD4: // RSTn
+				case 0xD5: // RSTn
+				case 0xD6: // RSTn
+				case 0xD7: // RSTn
+					params.currentPos += 2;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadMarker;
+					return;
+				
+				// Ignore next two bytes, get next marker
+				case 0xDD: // DRI
+					params.currentPos += 4;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadMarker;
+					return;
+
+				// Read length from next two bytes, get next marker
+				case 0xC0: // SOF0
+				case 0xC2: // SOF2
+				case 0xC4: // DHT
+				case 0xDB: // DQT
+				case 0xDA: // SOS
+				case 0xFE: // COM
+					params.currentPos += 2;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadLengthToNextMarker;
+					return;
+
+				// Read length from next two bytes, get marker data
+				case 0xE0: // APPn
+				case 0xE1: // APPn
+				case 0xE2: // APPn
+					params.currentPos += 2;
+					params.sliceLength = 2;
+					params.state = ProcessState.ReadLengthOfData;
+					return;
+
+				default:
+					return ProcessState.Stop;
+			}
+		}
+
+		// Looks for XMP data in APPn marker section
+		function readMarkerData(data, params) {
+			// Convert data to string
+			var text = String.fromCharCode.apply(null, data);
+			// Look for XMP data
+			if (text.indexOf(xmpIdentifier) == 0)  params.xmpreader.XMPData = text.substring(xmpIdentifier.length);
 		}
 
 		return XmpReader;
