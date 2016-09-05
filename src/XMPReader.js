@@ -52,6 +52,11 @@ var _xmpreader;
 			getSlice(params);
 		};
 
+		// Returns true if XMP data was obtained
+		XmpReader.prototype.hasData = function() {
+			return (this.XMPData && this.XMPData.length > 0);
+		};
+
 		// Gets a slice from the file blob and reads slice as array buffer
 		function getSlice(params) {
 			var slice = params.fileblob.slice(params.currentPos, params.currentPos + params.sliceLength);
