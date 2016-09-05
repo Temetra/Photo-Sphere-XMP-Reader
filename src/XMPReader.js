@@ -19,8 +19,8 @@ var _xmpreader;
 
 			// Set up events
 			_domlessevent.initializeEvents(this);
-			_domlessevent.addEvent("xmploaded", this);
-			_domlessevent.addEvent("xmperror", this);
+			_domlessevent.addEvent("loaded", this);
+			_domlessevent.addEvent("error", this);
 		}
 
 		// Returns string value of GPano XMP attribute
@@ -95,8 +95,8 @@ var _xmpreader;
 					break;
 				default:
 					// Stop processing
-					if (params.xmpreader.XMPData) _domlessevent.dispatchEvent(params.xmpreader, "xmploaded");
-					else _domlessevent.dispatchEvent(params.xmpreader, "xmperror");
+					if (params.xmpreader.XMPData) _domlessevent.dispatchEvent(params.xmpreader, "loaded");
+					else _domlessevent.dispatchEvent(params.xmpreader, "error");
 					break;
 			}
 		}
