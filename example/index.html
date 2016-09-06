@@ -32,8 +32,8 @@
 	<script>
 		// Set up XMP reader
 		var xmp = new _xmpreader.XmpReader();
-		xmp.addEventListener("xmploaded", onXmpLoaded);
-		xmp.addEventListener("xmperror", onXmpError);
+		xmp.addEventListener("loaded", onXmpLoaded);
+		xmp.addEventListener("error", onXmpError);
 
 		// Load successful
 		function onXmpLoaded() {
