@@ -1,37 +1,39 @@
 var _xmpreader;
 
 (function (_xmpreader) {
-	var xmpIdentifier = "http://ns.adobe.com/xap/1.0/";
-
-	var ProcessState = {
-		Stop: "Stop",
-		ReadMarker: "ReadMarker",
-		ReadLengthToNextMarker: "ReadLengthToNextMarker",
-		ReadLengthOfData: "ReadLengthOfData",
-		ReadData: "ReadData"
-	};
-
 	var XmpReader = (function () {
+		// Identifier for XMP data
+		var xmpIdentifier = "http://ns.adobe.com/xap/1.0/";
+
+		// State enum for processing JPEG marker data
+		var ProcessState = {
+			Stop: "Stop",
+			ReadMarker: "ReadMarker",
+			ReadLengthToNextMarker: "ReadLengthToNextMarker",
+			ReadLengthOfData: "ReadLengthOfData",
+			ReadData: "ReadData"
+		};
+
 		// Constructor method
 		function XmpReader() {
 			// Initialize public attributes
 			this.XMPData = "";
 
 			// Set up events
-			this.events = { 
-				loaded: [], 
-				error: [] 
+			this.events = {
+				loaded: [],
+				error: []
 			};
 		}
 
 		// Pure javascript objects don't get DOM events; this fakes it with a callback list
-		XmpReader.prototype.addEventListener = function(eventName, callback) {
+		XmpReader.prototype.addEventListener = function (eventName, callback) {
 			if (eventName in this.events) {
 				this.events[eventName].push(callback);
 			}
 		};
 
-		XmpReader.prototype.removeEventListener = function(eventName, callback) {
+		XmpReader.prototype.removeEventListener = function (eventName, callback) {
 			if (eventName in this.events) {
 				var index = this.events[eventName].indexOf(callback);
 				if (index > -1) {
@@ -44,7 +46,7 @@ var _xmpreader;
 			if (eventName in xmpReader.events) {
 				var callbacks = xmpReader.events[eventName];
 
-				callbacks.forEach(function(callback) {
+				callbacks.forEach(function (callback) {
 					callback(eventArgs);
 				});
 			}
@@ -60,9 +62,9 @@ var _xmpreader;
 		};
 
 		// Extracts XMP data from file blob
-		XmpReader.prototype.readFile = function(file) {
+		XmpReader.prototype.readFile = function (file) {
 			// Reinitialize public attributes
-			this.XMPData = ""; 
+			this.XMPData = "";
 
 			// Initialize private parameters
 			var params = {
@@ -73,14 +75,14 @@ var _xmpreader;
 				state: ProcessState.ReadMarker,
 				xmpreader: this
 			};
-			
+
 			// Start reading data
-			params.filereader.onload = function(event) { filereaderOnload(event, params) };
+			params.filereader.onload = function (event) { filereaderOnload(event, params) };
 			getSlice(params);
 		};
 
 		// Returns true if XMP data was obtained
-		XmpReader.prototype.hasData = function() {
+		XmpReader.prototype.hasData = function () {
 			return (this.XMPData != undefined && this.XMPData.length > 0);
 		};
 
@@ -156,7 +158,7 @@ var _xmpreader;
 					params.sliceLength = 2;
 					params.state = ProcessState.ReadMarker;
 					return;
-				
+
 				// Ignore next two bytes, get next marker
 				case 0xDD: // DRI
 					params.currentPos += 4;
@@ -195,7 +197,7 @@ var _xmpreader;
 			// Convert data to string
 			var text = String.fromCharCode.apply(null, data);
 			// Look for XMP data
-			if (text.indexOf(xmpIdentifier) == 0)  params.xmpreader.XMPData = text.substring(xmpIdentifier.length);
+			if (text.indexOf(xmpIdentifier) == 0) params.xmpreader.XMPData = text.substring(xmpIdentifier.length);
 		}
 
 		return XmpReader;
