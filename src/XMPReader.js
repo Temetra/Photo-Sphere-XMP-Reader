@@ -18,9 +18,36 @@ var _xmpreader;
 			this.XMPData = "";
 
 			// Set up events
-			_domlessevent.initializeEvents(this);
-			_domlessevent.addEvent("loaded", this);
-			_domlessevent.addEvent("error", this);
+			this.events = { 
+				loaded: [], 
+				error: [] 
+			};
+		}
+
+		// Pure javascript objects don't get DOM events; this fakes it with a callback list
+		XmpReader.prototype.addEventListener = function(eventName, callback) {
+			if (eventName in this.events) {
+				this.events[eventName].push(callback);
+			}
+		};
+
+		XmpReader.prototype.removeEventListener = function(eventName, callback) {
+			if (eventName in this.events) {
+				var index = this.events[eventName].indexOf(callback);
+				if (index > -1) {
+					this.events[eventName].splice(index, 1);
+				}
+			}
+		};
+
+		function dispatchEvent(xmpReader, eventName, eventArgs) {
+			if (eventName in xmpReader.events) {
+				var callbacks = xmpReader.events[eventName];
+
+				callbacks.forEach(function(callback) {
+					callback(eventArgs);
+				});
+			}
 		}
 
 		// Returns string value of GPano XMP attribute
@@ -100,8 +127,8 @@ var _xmpreader;
 					break;
 				default:
 					// Stop processing
-					if (params.xmpreader.XMPData) _domlessevent.dispatchEvent(params.xmpreader, "loaded");
-					else _domlessevent.dispatchEvent(params.xmpreader, "error");
+					if (params.xmpreader.XMPData) dispatchEvent(params.xmpreader, "loaded");
+					else dispatchEvent(params.xmpreader, "error");
 					break;
 			}
 		}
