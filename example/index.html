@@ -45,10 +45,10 @@
 			}
 
 			// Calc degrees
-			var fullWidth = parseInt(document.getElementById("FullPanoWidthPixels").value);
-			var fullHeight = parseInt(document.getElementById("FullPanoHeightPixels").value);
-			var croppedWidth = parseInt(document.getElementById("CroppedAreaImageWidthPixels").value);
-			var croppedHeight = parseInt(document.getElementById("CroppedAreaImageHeightPixels").value);
+			var fullWidth = xmp.getGPanoValue("FullPanoWidthPixels");
+			var fullHeight = xmp.getGPanoValue("FullPanoHeightPixels");
+			var croppedWidth = xmp.getGPanoValue("CroppedAreaImageWidthPixels");
+			var croppedHeight = xmp.getGPanoValue("CroppedAreaImageHeightPixels");
 			document.getElementById("HorizDeg").value = Math.round(radToDeg(croppedWidth * (Math.PI * 2 / fullWidth)));
 			document.getElementById("VertDeg").value = Math.round(radToDeg(croppedHeight * (Math.PI / fullHeight)));
 		}
