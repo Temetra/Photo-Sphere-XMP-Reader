@@ -1,3 +1,6 @@
+/* global FileReader */
+/* global Uint8Array */
+
 var _xmpreader;
 
 (function (_xmpreader) {
