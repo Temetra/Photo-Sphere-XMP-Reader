@@ -37,4 +37,4 @@ XmpReader.prototype.addEventListener = XmpReaderEvents.addEventListener
 XmpReader.prototype.removeEventListener = XmpReaderEvents.removeEventListener
 XmpReader.prototype.dispatchEvent = XmpReaderEvents.dispatchEvent
 
-export default XmpReader
+export { XmpReader }
