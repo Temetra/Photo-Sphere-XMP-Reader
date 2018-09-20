@@ -6,7 +6,6 @@
 <meta name="title" content="">
 <meta name="description" content="">
 <link rel="stylesheet" href="styles.css">
-<script src="../src/XMPReader.js"></script>
 </head>
 
 <body>
@@ -28,9 +27,10 @@
 		<div class="param"><label for="VertDeg">Vertical field of view</label><input type="text" id="VertDeg"></div>
 	</form>
 
-	<script>
+	<script type="module">
 		// Set up XMP reader
-		var xmp = new _xmpreader.XmpReader();
+		import XmpReader from '../src/XmpReaderClass.js'
+		var xmp = new XmpReader();
 		xmp.addEventListener("loaded", onXmpLoaded);
 		xmp.addEventListener("error", onXmpError);
 
