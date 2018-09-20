@@ -28,9 +28,9 @@
 		<div class="param"><label for="VertDeg">Vertical field of view</label><input type="text" id="VertDeg"></div>
 	</form>
 
-	<script type="module">
+	<script>
 		// Set up XMP reader
-		var xmp = new _XmpReader.XmpReader();
+		var xmp = new _xmpreader.XmpReader();
 		xmp.addEventListener("loaded", onXmpLoaded);
 		xmp.addEventListener("error", onXmpError);
 
